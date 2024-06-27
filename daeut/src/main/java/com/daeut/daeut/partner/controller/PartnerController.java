@@ -46,7 +46,8 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.context.SecurityContextHolder;
 
-
+import java.util.Map;
+import java.util.HashMap;
 
 @Slf4j
 @RestController
@@ -228,7 +229,6 @@ public class PartnerController {
         }
     }
 
-
     // 파트너 예약란
     @GetMapping("/partnerReservation")
     public String partnerReservation(Model model, HttpSession session) throws Exception {
@@ -247,21 +247,28 @@ public class PartnerController {
     }
 
     // 파트너 예약 상세조회란 
-    @GetMapping("/partnerReservationRead")
-    public String partnerReservationRead(@RequestParam("ordersNo") String ordersNo, Model model) throws Exception {
-        // 주문에 대한 상세 정보를 조회하고 모델에 추가
-        Orders order = orderService.listByOrderNo(ordersNo);
-        Payments payments = paymentService.selectByOrdersNo(ordersNo);
-        List<OrderItems> orderItemList = orderItemService.listByOrderNo(ordersNo);
+    @GetMapping("/{ordersNo}")
+    public ResponseEntity<?> partnerReservationRead(@PathVariable("ordersNo") String ordersNo) {
+        try {
+            // 주문에 대한 상세 정보를 조회
+            Orders order = orderService.listByOrderNo(ordersNo);
+            Payments payments = paymentService.selectByOrdersNo(ordersNo);
+            List<OrderItems> orderItemList = orderItemService.listByOrderNo(ordersNo);
 
-        for (OrderItems orderItems : orderItemList) {
-            Services service = reservationService.select(orderItems.getServiceNo());
-            model.addAttribute("service", service);
+            // 서비스 정보를 담을 맵
+            Map<String, Object> response = new HashMap<>();
+            response.put("order", order);
+            response.put("payments", payments);
+
+            for (OrderItems orderItems : orderItemList) {
+                Services service = reservationService.select(orderItems.getServiceNo());
+                response.put("service_" + orderItems.getServiceNo(), service);
+            }
+
+            return ResponseEntity.ok(response);
+        } catch (Exception e) {
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body("Exception occurred: " + e.getMessage());
         }
-
-        model.addAttribute("order", order);
-        model.addAttribute("payments", payments);
-        return "/partner/partnerReservationRead";
     }
 
     
