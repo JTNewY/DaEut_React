@@ -246,7 +246,7 @@ public class PartnerController {
         return "/partner/partnerReservation";  
     }
 
-    // 파트너 예약 상세조회란
+    // 파트너 예약 상세조회란 
     @GetMapping("/partnerReservationRead")
     public String partnerReservationRead(@RequestParam("ordersNo") String ordersNo, Model model) throws Exception {
         // 주문에 대한 상세 정보를 조회하고 모델에 추가
