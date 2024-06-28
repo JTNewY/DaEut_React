@@ -31,16 +31,13 @@ import com.daeut.daeut.reservation.service.OrderItemService;
 import com.daeut.daeut.reservation.service.OrderService;
 import com.daeut.daeut.reservation.service.PaymentService;
 import com.daeut.daeut.reservation.service.ReservationService;
-import com.daeut.daeut.tip.dto.Board;
 
 import lombok.extern.slf4j.Slf4j;
 
 import org.springframework.web.bind.annotation.CrossOrigin;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.ModelAttribute;
 import org.springframework.web.bind.annotation.PathVariable;
-import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.security.access.prepost.PreAuthorize;
@@ -182,7 +179,7 @@ public class PartnerController {
     // }
 
     // 탈퇴 처리
-    @DeleteMapping("/deleteUser")
+    @DeleteMapping("/{userNo}")
     public ResponseEntity<?> deleteUser(@RequestParam("userNo") int userNo, @RequestParam("userId") String userId) {
         try {
             // 사용자 삭제 처리
@@ -205,32 +202,29 @@ public class PartnerController {
     }
 
     // 파트너 리뷰란
-    @GetMapping("/partnerReview")
+    @GetMapping("/{partnerNo}")
     @Transactional
-    public String getReviewsByPartnerNo(Model model, HttpSession session) throws Exception {
+    public ResponseEntity<?> getReviewsByPartnerNo(@RequestParam("partnerNo") Integer partnerNo) {
         try {
-            Integer partnerNo = (Integer) session.getAttribute("partnerNo");
             if (partnerNo == null) {
-                log.error("PartnerNo not found in session");
-                throw new Exception("PartnerNo not found in session");
+                log.error("PartnerNo is missing in request");
+                return ResponseEntity.status(HttpStatus.BAD_REQUEST).body("PartnerNo is missing in request");
             }
-            
+
             List<Review> reviews = partnerService.getReviews(partnerNo);
-            
+
             // Add reviews to the log
             log.info("Reviews retrieved: {}", reviews);
-            
-            model.addAttribute("reviews", reviews);
-            
-            return "/partner/partnerReview";
+
+            return ResponseEntity.ok(reviews);
         } catch (Exception e) {
             log.error("Error in getReviewsByPartnerNo method", e);
-            throw e;
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body("Exception occurred: " + e.getMessage());
         }
     }
 
     // 파트너 예약란
-    @GetMapping("/partnerReservation")
+    @GetMapping("/{partnerNo}")
     public String partnerReservation(Model model, HttpSession session) throws Exception {
         int partnerNo = (int) session.getAttribute("partnerNo"); // 세션에서 partnerNo 가져오기
         List<Orders> orderList = orderService.listByPartnerNo(partnerNo); // 주문 목록 가져오기
@@ -238,10 +232,7 @@ public class PartnerController {
         for (Orders orders : orderList) {
             Payments payments = paymentService.selectByOrdersNo(orders.getOrdersNo());
             model.addAttribute("payments", payments);
-
-
         }
-
         model.addAttribute("orderList", orderList); // 모델에 주문 목록 추가
         return "/partner/partnerReservation";  
     }
