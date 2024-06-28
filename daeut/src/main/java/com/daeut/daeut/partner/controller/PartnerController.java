@@ -224,7 +224,7 @@ public class PartnerController {
     }
 
     // 파트너 예약란
-    @GetMapping("/{partnerNo}")
+    @GetMapping("/{partnerNo}/reservation")
     public String partnerReservation(Model model, HttpSession session) throws Exception {
         int partnerNo = (int) session.getAttribute("partnerNo"); // 세션에서 partnerNo 가져오기
         List<Orders> orderList = orderService.listByPartnerNo(partnerNo); // 주문 목록 가져오기
